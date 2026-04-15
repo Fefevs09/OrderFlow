@@ -20,19 +20,19 @@ pipeline {
                     env.DOCKER_TAG = "${BUILD_NUMBER}-${GIT_COMMIT.take(7)}"
                 }
                 sh 'java -version'
-                sh 'chmod +x maven-build.sh'
+                sh 'mvn -version'
             }
         }
 
         stage('Build') {
             steps {
-                sh './maven-build.sh clean compile'
+                sh 'mvn clean compile'
             }
         }
 
         stage('Unit Tests') {
             steps {
-                sh './maven-build.sh test'
+                sh 'mvn test'
             }
             post {
                 always {
@@ -49,7 +49,7 @@ pipeline {
                 }
             }
             steps {
-                sh './maven-build.sh clean package -DskipTests'
+                sh 'mvn clean package -DskipTests'
             }
         }
 
