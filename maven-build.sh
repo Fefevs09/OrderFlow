@@ -8,7 +8,7 @@ MAVEN_BIN="$MAVEN_DIR/bin/mvn"
 if [ ! -f "$MAVEN_BIN" ]; then
     echo "Baixando Apache Maven $MAVEN_VERSION..."
     mkdir -p "$HOME/.m2/wrapper"
-    curl -fsSL "https://dlcdn.apache.org/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz" | tar -xz -C "$HOME/.m2/wrapper"
+    curl -fsSL "https://archive.apache.org/dist/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz" | tar -xz -C "$HOME/.m2/wrapper"
 fi
 
 exec "$MAVEN_BIN" "$@"
