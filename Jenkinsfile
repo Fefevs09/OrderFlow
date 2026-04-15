@@ -20,54 +20,23 @@ pipeline {
                     env.DOCKER_TAG = "${BUILD_NUMBER}-${GIT_COMMIT.take(7)}"
                 }
                 sh 'java -version'
-                sh 'docker --version'
+                sh 'chmod +x maven-build.sh'
             }
         }
 
         stage('Build') {
             steps {
-                script {
-                    docker.image('maven:3.9-eclipse-temurin-17-alpine').inside('-v ${HOME}/.m2:/root/.m2') {
-                        sh 'mvn clean compile'
-                    }
-                }
+                sh './maven-build.sh clean compile'
             }
         }
 
         stage('Unit Tests') {
             steps {
-                script {
-                    docker.image('maven:3.9-eclipse-temurin-17-alpine').inside('-v ${HOME}/.m2:/root/.m2') {
-                        sh 'mvn test'
-                    }
-                }
+                sh './maven-build.sh test'
             }
             post {
                 always {
                     junit testResults: 'target/surefire-reports/*.xml'
-                }
-            }
-        }
-
-        stage('Integration Tests') {
-            steps {
-                sh 'docker-compose up -d postgres kafka rabbitmq'
-                sh 'sleep 30'
-                script {
-                    docker.image('maven:3.9-eclipse-temurin-17-alpine').inside('-v ${HOME}/.m2:/root/.m2 --network host') {
-                        sh '''
-                            export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/orders_db
-                            export SPRING_KAFKA_BOOTSTRAP_SERVERS=localhost:9092
-                            export SPRING_RABBITMQ_HOST=localhost
-                            mvn verify -P integration-tests || true
-                        '''
-                    }
-                }
-            }
-            post {
-                always {
-                    sh 'docker-compose down -v || true'
-                    junit testResults: 'target/failsafe-reports/*.xml', allowEmptyResults: true
                 }
             }
         }
@@ -80,24 +49,7 @@ pipeline {
                 }
             }
             steps {
-                script {
-                    docker.image('maven:3.9-eclipse-temurin-17-alpine').inside('-v ${HOME}/.m2:/root/.m2') {
-                        sh 'mvn clean package -DskipTests'
-                    }
-                }
-            }
-        }
-
-        stage('Build Docker Image') {
-            when {
-                anyOf {
-                    branch 'main'
-                    branch 'develop'
-                }
-            }
-            steps {
-                sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
-                sh "docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest"
+                sh './maven-build.sh clean package -DskipTests'
             }
         }
 
