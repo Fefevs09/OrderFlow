@@ -20,19 +20,27 @@ pipeline {
                     env.DOCKER_TAG = "${BUILD_NUMBER}-${GIT_COMMIT.take(7)}"
                 }
                 sh 'java -version'
-                sh 'mvn -version'
+                sh 'docker --version'
             }
         }
 
         stage('Build') {
             steps {
-                sh 'mvn clean compile'
+                script {
+                    docker.image('maven:3.9-eclipse-temurin-17-alpine').inside('-v ${HOME}/.m2:/root/.m2') {
+                        sh 'mvn clean compile'
+                    }
+                }
             }
         }
 
         stage('Unit Tests') {
             steps {
-                sh 'mvn test'
+                script {
+                    docker.image('maven:3.9-eclipse-temurin-17-alpine').inside('-v ${HOME}/.m2:/root/.m2') {
+                        sh 'mvn test'
+                    }
+                }
             }
             post {
                 always {
@@ -45,12 +53,16 @@ pipeline {
             steps {
                 sh 'docker-compose up -d postgres kafka rabbitmq'
                 sh 'sleep 30'
-                sh '''
-                    export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/orders_db
-                    export SPRING_KAFKA_BOOTSTRAP_SERVERS=localhost:9092
-                    export SPRING_RABBITMQ_HOST=localhost
-                    mvn verify -P integration-tests || true
-                '''
+                script {
+                    docker.image('maven:3.9-eclipse-temurin-17-alpine').inside('-v ${HOME}/.m2:/root/.m2 --network host') {
+                        sh '''
+                            export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/orders_db
+                            export SPRING_KAFKA_BOOTSTRAP_SERVERS=localhost:9092
+                            export SPRING_RABBITMQ_HOST=localhost
+                            mvn verify -P integration-tests || true
+                        '''
+                    }
+                }
             }
             post {
                 always {
@@ -68,7 +80,11 @@ pipeline {
                 }
             }
             steps {
-                sh 'mvn clean package -DskipTests'
+                script {
+                    docker.image('maven:3.9-eclipse-temurin-17-alpine').inside('-v ${HOME}/.m2:/root/.m2') {
+                        sh 'mvn clean package -DskipTests'
+                    }
+                }
             }
         }
 
