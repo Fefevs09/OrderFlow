@@ -77,7 +77,7 @@ pipeline {
             post {
                 always {
                     sh 'docker-compose down -v || true'
-                    junit 'target/failsafe-reports/*.xml', allowEmptyResults: true
+                    junit testResults: 'target/failsafe-reports/*.xml', allowEmptyResults: true
                 }
             }
         }
