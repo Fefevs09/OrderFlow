@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'Maven-3.9'
-        jdk 'JDK-17'
-    }
-
     environment {
         MAVEN_OPTS = '-Dmaven.repo.local=.m2/repository'
         DOCKER_IMAGE = 'order-service'
