@@ -20,8 +20,7 @@ class OrderTest {
         return Customer.create(
                 "John Doe",
                 Email.of("john@example.com"),
-                Address.of("123 Main St", "São Paulo", "SP", "01000-000")
-        );
+                Address.of("123 Main St", "São Paulo", "SP", "01000-000"));
     }
 
     private OrderItem createValidItem() {
@@ -53,8 +52,7 @@ class OrderTest {
         var customer = createValidCustomer();
         var items = List.of(
                 OrderItem.create("PROD-001", "Product 1", 2, Money.of(50.00)),
-                OrderItem.create("PROD-002", "Product 2", 1, Money.of(100.00))
-        );
+                OrderItem.create("PROD-002", "Product 2", 1, Money.of(100.00)));
 
         // Act
         var order = Order.create(customer, items);
@@ -112,8 +110,7 @@ class OrderTest {
         var customer = createValidCustomer();
         var items = List.of(
                 OrderItem.create("PROD-001", "Product 1", 1, Money.of(50.00)),
-                OrderItem.create("PROD-002", "Product 2", 1, Money.of(100.00))
-        );
+                OrderItem.create("PROD-002", "Product 2", 1, Money.of(100.00)));
         var order = Order.create(customer, items);
 
         // Act
@@ -148,5 +145,99 @@ class OrderTest {
 
         // Assert
         assertTrue(order.isFinalized());
+    }
+
+    @Test
+    @DisplayName("Should throw exception with correct message when confirming already confirmed order")
+    void shouldThrowExceptionWithCorrectMessageWhenConfirmingAlreadyConfirmedOrder() {
+        // Arrange
+        var customer = createValidCustomer();
+        var order = Order.create(customer, List.of(createValidItem()));
+        order.confirm(); // First confirmation
+
+        // Act & Assert
+        var exception = assertThrows(InvalidOrderException.class, order::confirm);
+        assertEquals("Only pending orders can be confirmed", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when confirming cancelled order")
+    void shouldThrowExceptionWhenConfirmingCancelledOrder() {
+        // Arrange
+        var customer = createValidCustomer();
+        var order = Order.create(customer, List.of(createValidItem()));
+        order.cancel();
+
+        // Act & Assert
+        var exception = assertThrows(InvalidOrderException.class, order::confirm);
+        assertEquals("Only pending orders can be confirmed", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when confirming shipped order")
+    void shouldThrowExceptionWhenConfirmingShippedOrder() {
+        // Arrange
+        var customer = createValidCustomer();
+        var order = Order.create(customer, List.of(createValidItem()));
+        order.confirm();
+        order.ship();
+
+        // Act & Assert
+        var exception = assertThrows(InvalidOrderException.class, order::confirm);
+        assertEquals("Only pending orders can be confirmed", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when confirming delivered order")
+    void shouldThrowExceptionWhenConfirmingDeliveredOrder() {
+        // Arrange
+        var customer = createValidCustomer();
+        var order = Order.create(customer, List.of(createValidItem()));
+        order.confirm();
+        order.ship();
+        order.deliver();
+
+        // Act & Assert
+        var exception = assertThrows(InvalidOrderException.class, order::confirm);
+        assertEquals("Only pending orders can be confirmed", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should return true for isConfirmed when status is confirmed")
+    void shouldReturnTrueForIsConfirmedWhenStatusIsConfirmed() {
+        // Arrange
+        var customer = createValidCustomer();
+        var order = Order.create(customer, List.of(createValidItem()));
+        order.confirm();
+
+        // Assert
+        assertTrue(order.isConfirmed());
+    }
+
+    @Test
+    @DisplayName("Should return false for isConfirmed when status is pending")
+    void shouldReturnFalseForIsConfirmedWhenStatusIsPending() {
+        // Arrange
+        var customer = createValidCustomer();
+        var order = Order.create(customer, List.of(createValidItem()));
+
+        // Assert
+        assertFalse(order.isConfirmed());
+    }
+
+    @Test
+    @DisplayName("Should update timestamp when confirming order")
+    void shouldUpdateTimestampWhenConfirmingOrder() throws InterruptedException {
+        // Arrange
+        var customer = createValidCustomer();
+        var order = Order.create(customer, List.of(createValidItem()));
+        var updatedAtBefore = order.getUpdatedAt();
+
+        // Act
+        Thread.sleep(100); // Ensure timestamp difference
+        order.confirm();
+
+        // Assert
+        assertTrue(order.getUpdatedAt().isAfter(updatedAtBefore));
     }
 }

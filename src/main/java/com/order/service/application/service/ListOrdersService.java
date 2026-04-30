@@ -7,6 +7,7 @@ import com.order.service.domain.model.Order;
 import com.order.service.domain.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.Cacheable;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,6 +19,7 @@ public class ListOrdersService implements ListOrdersUseCase {
     private final OrderRepository orderRepository;
 
     @Override
+    @Cacheable(value = "orders")
     public List<OrderResponse> findAll() {
         return orderRepository.findAll().stream()
                 .map(this::mapToResponse)
@@ -25,6 +27,7 @@ public class ListOrdersService implements ListOrdersUseCase {
     }
 
     @Override
+    @Cacheable(value = "ordersByStatus", key = "#status")
     public List<OrderResponse> findByStatus(String status) {
         var orderStatus = Order.OrderStatus.valueOf(status.toUpperCase());
         return orderRepository.findByStatus(orderStatus).stream()

@@ -38,6 +38,11 @@ public class SnsNotificationAdapter implements NotificationPort {
         publishToSns("Atualização de Pedido", message);
     }
 
+    @Override
+    public void sendOrderConfirmationEmail(Order order) {
+        
+    }
+
     private void publishToSns(String subject, String message) {
         try {
             PublishRequest request = PublishRequest.builder()

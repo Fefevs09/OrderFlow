@@ -1,70 +1,49 @@
 package com.order.service.application.service;
 
 import com.order.service.application.dto.OrderItemResponse;
-import com.order.service.application.dto.OrderRequest;
 import com.order.service.application.dto.OrderResponse;
-import com.order.service.application.port.inbound.CreateOrderUseCase;
+import com.order.service.application.port.inbound.ConfirmOrderUseCase;
 import com.order.service.application.port.outbound.EventPublisherPort;
-import com.order.service.domain.event.OrderCreatedEvent;
-import com.order.service.domain.model.Customer;
+import com.order.service.domain.event.OrderStatusUpdatedEvent;
+import com.order.service.domain.exception.OrderNotFoundException;
 import com.order.service.domain.model.Order;
-import com.order.service.domain.model.OrderItem;
-import com.order.service.domain.model.vo.Address;
-import com.order.service.domain.model.vo.Email;
-import com.order.service.domain.model.vo.Money;
 import com.order.service.domain.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.cache.annotation.CacheEvict;
 
-import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class CreateOrderService implements CreateOrderUseCase {
+public class ConfirmOrderService implements ConfirmOrderUseCase {
 
     private final OrderRepository orderRepository;
-    private final EventPublisherPort eventPublisher;
+    private final EventPublisherPort eventPublisherPort;
 
     @Override
     @Transactional
     @CacheEvict(value = { "orders", "ordersByStatus" }, allEntries = true)
-    public OrderResponse execute(OrderRequest request) {
-        var customer = createCustomer(request);
-        var items = createOrderItems(request);
-        var order = Order.create(customer, items);
-
-        var savedOrder = orderRepository.save(order);
-        eventPublisher.publish(new OrderCreatedEvent(savedOrder));
-
-        return mapToResponse(savedOrder);
+    public OrderResponse execute(String id) {
+        return orderRepository.findById(id)
+                .map(this::confirmOrder)
+                .map(this::saveAndPublish)
+                .map(this::mapToResponse)
+                .orElseThrow(() -> new OrderNotFoundException(id));
     }
 
-    private Customer createCustomer(OrderRequest request) {
-        return Customer.create(
-                request.getCustomerName(),
-                Email.of(request.getCustomerEmail()),
-                Address.of(
-                        request.getStreet(),
-                        request.getCity(),
-                        request.getState(),
-                        request.getZipCode(),
-                        request.getCountry()
-                )
-        );
+    private Order confirmOrder(Order order) {
+        order.confirm();
+        return order;
     }
 
-    private List<OrderItem> createOrderItems(OrderRequest request) {
-        return request.getItems().stream()
-                .map(item -> OrderItem.create(
-                        item.getProductId(),
-                        item.getProductName(),
-                        item.getQuantity(),
-                        Money.of(item.getUnitPrice())
-                ))
-                .collect(Collectors.toList());
+    private Order saveAndPublish(Order order) {
+        var previousStatus = order.getStatus();
+
+        orderRepository.save(order);
+        eventPublisherPort.publish(new OrderStatusUpdatedEvent(order, previousStatus));
+        return order;
     }
 
     private OrderResponse mapToResponse(Order order) {
@@ -91,4 +70,5 @@ public class CreateOrderService implements CreateOrderUseCase {
                 .updatedAt(order.getUpdatedAt())
                 .build();
     }
+
 }

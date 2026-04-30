@@ -65,6 +65,11 @@ public class SesEmailAdapter implements NotificationPort {
         sendEmail(order.getCustomer().getEmailValue(), subject, body);
     }
 
+    @Override
+    public void sendOrderConfirmationEmail(Order order) {
+
+    }
+
     private void sendEmail(String to, String subject, String body) {
         try {
             SendEmailRequest request = SendEmailRequest.builder()

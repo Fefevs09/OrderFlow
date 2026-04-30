@@ -5,4 +5,6 @@ import com.order.service.domain.model.Order;
 public interface NotificationPort {
     void notifyOrderCreated(Order order);
     void notifyOrderStatusUpdated(Order order, String message);
+
+    void sendOrderConfirmationEmail(Order order);
 }
