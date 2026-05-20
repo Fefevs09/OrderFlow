@@ -2,6 +2,7 @@ package com.order.service.infrastructure.adapter.in.web;
 
 import com.order.service.application.dto.OrderRequest;
 import com.order.service.application.dto.OrderResponse;
+import com.order.service.application.port.inbound.CancelOrderUseCase;
 import com.order.service.application.port.inbound.ConfirmOrderUseCase;
 import com.order.service.application.port.inbound.CreateOrderUseCase;
 import com.order.service.application.port.inbound.GetOrderUseCase;
@@ -24,6 +25,7 @@ public class OrderController {
     private final GetOrderUseCase getOrderUseCase;
     private final ListOrdersUseCase listOrdersUseCase;
     private final ConfirmOrderUseCase confirmOrderUseCase;
+    private final CancelOrderUseCase cancelOrderUseCase;
 
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(@RequestBody @Valid OrderRequest request) {
@@ -51,5 +53,12 @@ public class OrderController {
     public ResponseEntity<OrderResponse> confirmOrder(@PathVariable String id) {
         var response = confirmOrderUseCase.execute(id);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<OrderResponse> cancelOrder(@PathVariable String id) {
+        var response = cancelOrderUseCase.execute(id);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+
     }
 }

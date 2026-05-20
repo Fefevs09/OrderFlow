@@ -64,8 +64,7 @@ class CreateOrderServiceTest {
         var customer = Customer.create(
                 "John Doe",
                 Email.of("john@example.com"),
-                Address.of("123 Main St", "São Paulo", "SP", "01000-000")
-        );
+                Address.of("123 Main St", "São Paulo", "SP", "01000-000"));
         var items = List.of(OrderItem.create("PROD-001", "Product 1", 2, Money.of(50.00)));
         return Order.create(customer, items);
     }
@@ -76,7 +75,7 @@ class CreateOrderServiceTest {
         // Arrange
         var request = createValidRequest();
         var orderId = UUID.randomUUID().toString();
-        var order = createValidOrder();
+        // var order = createValidOrder();
 
         // Make repository return the saved order with an ID
         when(orderRepository.save(any())).thenAnswer(invocation -> {
@@ -135,8 +134,7 @@ class CreateOrderServiceTest {
                         .productName("Product 2")
                         .quantity(1)
                         .unitPrice(new BigDecimal("100.00"))
-                        .build()
-        );
+                        .build());
         var request = OrderRequest.builder()
                 .customerName("John Doe")
                 .customerEmail("john@example.com")

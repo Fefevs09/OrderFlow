@@ -41,13 +41,14 @@ src/main/java/com/order/service/
 
 ### Princípios da Arquitetura
 
-| Camada | Responsabilidade |
-|--------|-----------------|
-| **Domain** | Regras de negócio puras, sem dependências de framework |
-| **Application** | Orquestra casos de uso, depende apenas do domain |
-| **Infrastructure** | Implementações concretas (frameworks, DB, APIs) |
+| Camada             | Responsabilidade                                       |
+| ------------------ | ------------------------------------------------------ |
+| **Domain**         | Regras de negócio puras, sem dependências de framework |
+| **Application**    | Orquestra casos de uso, depende apenas do domain       |
+| **Infrastructure** | Implementações concretas (frameworks, DB, APIs)        |
 
 **Fluxo de Dependência:**
+
 ```
 Infrastructure → Application → Domain
      ↑                              |
@@ -77,6 +78,7 @@ docker-compose up -d
 ```
 
 Isso iniciará:
+
 - PostgreSQL (porta 5432)
 - Kafka (porta 9092)
 - Zookeeper (porta 2181)
@@ -104,6 +106,7 @@ aws.sns.topic.arn=arn:aws:sns:us-east-1:123456789:orders-topic
 ## API Endpoints
 
 ### Criar Pedido
+
 ```bash
 POST /api/v1/orders
 Content-Type: application/json
@@ -128,6 +131,7 @@ Content-Type: application/json
 ```
 
 **Resposta (201 Created):**
+
 ```json
 {
   "id": "uuid-gerado",
@@ -140,11 +144,11 @@ Content-Type: application/json
       "productId": "PROD-001",
       "productName": "Produto Teste",
       "quantity": 2,
-      "unitPrice": 50.00,
-      "totalPrice": 100.00
+      "unitPrice": 50.0,
+      "totalPrice": 100.0
     }
   ],
-  "totalAmount": 100.00,
+  "totalAmount": 100.0,
   "status": "PENDING",
   "createdAt": "2024-01-01T10:00:00",
   "updatedAt": "2024-01-01T10:00:00"
@@ -152,16 +156,19 @@ Content-Type: application/json
 ```
 
 ### Buscar Pedido por ID
+
 ```bash
 GET /api/v1/orders/{id}
 ```
 
 ### Listar Todos os Pedidos
+
 ```bash
 GET /api/v1/orders
 ```
 
 ### Listar Pedidos por Status
+
 ```bash
 GET /api/v1/orders?status=PENDING
 ```
@@ -170,10 +177,10 @@ GET /api/v1/orders?status=PENDING
 
 ### Eventos Publicados
 
-| Evento | Descrição |
-|--------|-----------|
-| `OrderCreatedEvent` | Disparado quando um pedido é criado |
-| `OrderStatusUpdatedEvent` | Disparado quando o status muda |
+| Evento                    | Descrição                           |
+| ------------------------- | ----------------------------------- |
+| `OrderCreatedEvent`       | Disparado quando um pedido é criado |
+| `OrderStatusUpdatedEvent` | Disparado quando o status muda      |
 
 ### Fluxo de Mensageria
 
@@ -186,6 +193,7 @@ GET /api/v1/orders?status=PENDING
 ## Testes
 
 ### Executar todos os testes
+
 ```bash
 ./mvnw test
 ```
@@ -268,6 +276,7 @@ private List<OrderItem> createOrderItems(OrderRequest request) {
 ### Exceções Customizadas
 
 Hierarquia de exceções:
+
 ```
 DomainException (abstract)
 ├── OrderNotFoundException
@@ -278,6 +287,7 @@ DomainException (abstract)
 ### Portas e Adaptadores
 
 **Inbound Ports (Use Cases):**
+
 ```java
 public interface CreateOrderUseCase {
     OrderResponse execute(OrderRequest request);
@@ -285,6 +295,7 @@ public interface CreateOrderUseCase {
 ```
 
 **Outbound Ports (Serviços Externos):**
+
 ```java
 public interface EventPublisherPort {
     void publish(DomainEvent event);
@@ -298,6 +309,7 @@ public interface EventPublisherPort {
 ### Schema
 
 **Tabela `orders`:**
+
 - id (PK)
 - customer_name, customer_email
 - street, city, state, zip_code, country
@@ -306,6 +318,7 @@ public interface EventPublisherPort {
 - created_at, updated_at
 
 **Tabela `order_items`:**
+
 - id (PK)
 - order_id (FK)
 - product_id, product_name
@@ -313,10 +326,10 @@ public interface EventPublisherPort {
 
 ## Próximos Passos
 
-- [ ] Implementar confirmação de pedido (POST /orders/{id}/confirm)
-- [ ] Implementar cancelamento de pedido
+- [x] Implementar confirmação de pedido (POST /orders/{id}/confirm)
+- [x] Implementar cancelamento de pedido
 - [ ] Adicionar pagamento com integração Stripe
 - [ ] Implementar saga pattern para consistência distribuída
-- [ ] Adicionar cache com Redis
+- [x] Adicionar cache com Redis
 - [ ] Implementar rate limiting
-- [ ] Adicionar observabilidade (logs estruturados, métricas, tracing)
+- [ ] adicionar observabilidade (logs estruturados, métricas, tracing)
